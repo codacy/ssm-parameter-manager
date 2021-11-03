@@ -4,27 +4,35 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"gopkg.in/yaml.v3"
 )
 
-const unencryptedParameterFile = "/Users/loliveira/workspace/onboarding-project/ssm-test-values.sops.yaml"
-const encryptedParameterFile = "/Users/loliveira/workspace/onboarding-project/ssm-test-values-encrypted.sops.yaml"
-
 func main() {
-	environment := flag.String("e", "default", "Name of the AWS Environment")
+	environment := flag.String("e", "default", "Name of the AWS Environment.")
 	verbose := flag.Bool("v", false, "Prints information about the parameters being processed. This will print secrets to stdout in plain text!")
+	plainFiles := flag.String("plainFiles", "", "Path to plain yaml files, separated by comma.")
+	encryptedFiles := flag.String("encryptedFiles", "", "Path to encrypted yaml files, separated by comma.")
 	flag.Parse()
 
 	session := newAWSSession(*environment)
 	svc := ssm.New(session)
 
-	plainData := parseConfigurationFile(unencryptedParameterFile, false)
-	encryptedData := parseConfigurationFile(encryptedParameterFile, true)
+	for _, s := range strings.Split(*plainFiles, ",") {
+		if s != "" {
+			plainData := parseConfigurationFile(s, false)
+			processParameters(svc, plainData, *environment, *verbose)
+		}
+	}
 
-	processParameters(svc, plainData, *environment, *verbose)
-	processParameters(svc, encryptedData, *environment, *verbose)
+	for _, s := range strings.Split(*encryptedFiles, ",") {
+		if s != "" {
+			encryptedData := parseConfigurationFile(s, true)
+			processParameters(svc, encryptedData, *environment, *verbose)
+		}
+	}
 }
 
 func parseConfigurationFile(filePath string, encrypted bool) map[string]map[string]string {
