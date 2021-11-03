@@ -11,11 +11,15 @@ import (
 )
 
 func main() {
-	environment := flag.String("e", "default", "Name of the AWS Environment.")
+	environment := flag.String("e", "", "Target AWS Environment")
 	verbose := flag.Bool("v", false, "Prints information about the parameters being processed. This will print secrets to stdout in plain text!")
-	plainFiles := flag.String("plainFiles", "", "Path to plain yaml files, separated by comma.")
-	encryptedFiles := flag.String("encryptedFiles", "", "Path to encrypted yaml files, separated by comma.")
+	plainFiles := flag.String("plainFiles", "", "Path to plain yaml files, separated by comma")
+	encryptedFiles := flag.String("encryptedFiles", "", "Path to encrypted yaml files, separated by comma")
 	flag.Parse()
+
+	if *environment == "" {
+		log.Fatal("No AWS environment was specified")
+	}
 
 	session := newAWSSession(*environment)
 	svc := ssm.New(session)
