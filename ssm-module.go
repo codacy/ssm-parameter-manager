@@ -9,24 +9,24 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
-func processParameters(svc ssmiface.SSMAPI, parameters map[string]map[string]string, environment string) {
+func processParameters(svc ssmiface.SSMAPI, parameters map[string]map[string]string, environment string, verbose bool) {
+	fmt.Printf("Processing %d parameters for %s environment\n", len(parameters[environment]), environment)
 	for k, v := range parameters[environment] {
-		// print info on what it is parsing, number, etc
-		resultsPut, err := putParameter(svc, k, v, "String", true)
+		if verbose {
+			fmt.Printf("Putting and tagging parameter with key \"%s\" and value \"%s\"\n", k, v)
+		}
+
+		_, err := putParameter(svc, k, v, "String", true)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println(*resultsPut)
-
-		resultsTag, err := tagParameter(svc, k, "Parameter", createTags())
+		_, err = tagParameter(svc, k, "Parameter", createTags())
 
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Println(*resultsTag) // Write keys to terminal (hide value in case of secrets)
 	}
 }
 

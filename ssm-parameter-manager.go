@@ -14,7 +14,7 @@ const encryptedParameterFile = "/Users/loliveira/workspace/onboarding-project/ss
 
 func main() {
 	environment := flag.String("e", "default", "Name of the AWS Environment")
-	//flag.Bool("v", false, "Verbose") Warning this will print your secrets to stdout in PLAIN TEXT
+	verbose := flag.Bool("v", false, "Prints information about the parameters being processed. This will print secrets to stdout in plain text!")
 	flag.Parse()
 
 	session := newAWSSession(*environment)
@@ -23,8 +23,8 @@ func main() {
 	plainData := parseConfigurationFile(unencryptedParameterFile, false)
 	encryptedData := parseConfigurationFile(encryptedParameterFile, true)
 
-	processParameters(svc, plainData, *environment)
-	processParameters(svc, encryptedData, *environment)
+	processParameters(svc, plainData, *environment, *verbose)
+	processParameters(svc, encryptedData, *environment, *verbose)
 }
 
 func parseConfigurationFile(filePath string, encrypted bool) map[string]map[string]string {
