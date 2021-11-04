@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	"codacy/ssm-parameter-manager/sops"
@@ -16,29 +18,32 @@ import (
 )
 
 func main() {
-	environment := flag.String("e", "", "Target AWS Environment")
 	verbose := flag.Bool("v", false, "Prints information about the parameters being processed. This will print secrets to stdout in plain text!")
 	plainFiles := flag.String("plainFiles", "", "Path to plain yaml files, separated by comma")
 	encryptedFiles := flag.String("encryptedFiles", "", "Path to encrypted yaml files, separated by comma")
 	flag.Parse()
 
-	if *environment == "" {
-		log.Fatal("No AWS environment was specified")
+	environment := os.Getenv("AWS_PROFILE")
+
+	if environment == "" {
+		log.Fatal("AWS_PROFILE is not set.")
 	}
 
-	svc := awsSsm.New(newAWSSession(*environment))
+	svc := awsSsm.New(newAWSSession(environment))
+
+	fmt.Println()
 
 	for _, s := range strings.Split(*plainFiles, ",") {
 		if s != "" {
 			plainData := parseConfigurationFile(s, false)
-			ssm.ProcessParameters(svc, plainData, *environment, *verbose)
+			ssm.ProcessParameters(svc, plainData, environment, *verbose)
 		}
 	}
 
 	for _, s := range strings.Split(*encryptedFiles, ",") {
 		if s != "" {
 			encryptedData := parseConfigurationFile(s, true)
-			ssm.ProcessParameters(svc, encryptedData, *environment, *verbose)
+			ssm.ProcessParameters(svc, encryptedData, environment, *verbose)
 		}
 	}
 }
