@@ -9,6 +9,8 @@ import (
 	"codacy/ssm-parameter-manager/sops"
 	"codacy/ssm-parameter-manager/ssm"
 
+	assm "github.com/aws/aws-sdk-go/service/ssm"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,17 +25,20 @@ func main() {
 		log.Fatal("No AWS environment was specified")
 	}
 
+	session := ssm.NewAWSSession(*environment)
+	svc := assm.New(session)
+
 	for _, s := range strings.Split(*plainFiles, ",") {
 		if s != "" {
 			plainData := parseConfigurationFile(s, false)
-			ssm.ProcessParameters(plainData, *environment, *verbose)
+			ssm.ProcessParameters(svc, plainData, *environment, *verbose)
 		}
 	}
 
 	for _, s := range strings.Split(*encryptedFiles, ",") {
 		if s != "" {
 			encryptedData := parseConfigurationFile(s, true)
-			ssm.ProcessParameters(encryptedData, *environment, *verbose)
+			ssm.ProcessParameters(svc, encryptedData, *environment, *verbose)
 		}
 	}
 }

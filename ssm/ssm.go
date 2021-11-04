@@ -9,9 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
-func ProcessParameters(parameters map[string]map[string]string, environment string, verbose bool) {
-	session := newAWSSession(environment)
-	svc := ssm.New(session)
+func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]map[string]string, environment string, verbose bool) {
 
 	fmt.Printf("Processing %d parameters for %s environment\n", len(parameters[environment]), environment)
 
@@ -50,7 +48,7 @@ func createTags() []*ssm.Tag {
 	return tags
 }
 
-func newAWSSession(profile string) *session.Session {
+func NewAWSSession(profile string) *session.Session {
 	session := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 		Profile:           profile,
