@@ -7,4 +7,4 @@ build:
 
 .PHONY: test
 test:
-	go test -v ./sops
+	go test -v ./sops ./ssm

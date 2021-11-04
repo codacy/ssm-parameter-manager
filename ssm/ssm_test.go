@@ -31,18 +31,14 @@ func (m *mockSSMClient) PutParameter(input *ssm.PutParameterInput) (*ssm.PutPara
 	return out, nil
 }
 
-func TestProcessParameters(t *testing.T) {
+func (m *mockSSMClient) AddTagsToResource(input *ssm.AddTagsToResourceInput) (*ssm.AddTagsToResourceOutput, error) {
+	out := &ssm.AddTagsToResourceOutput{}
+	return out, nil
+}
 
-	mockSvc := mockSSMClient{}
+func TestProcessParametersWithoutErrors(t *testing.T) {
 
-	//_, err := mockSvc.PutParameter(nil)
-
-	// if err != nil {
-	// 	t.Error()
-	// }
+	mockSvc := &mockSSMClient{}
 
 	ProcessParameters(mockSvc, data, "test", true)
-
-	//t.Errorf(*coiso.Tier)
-
 }

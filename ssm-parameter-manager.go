@@ -9,7 +9,8 @@ import (
 	"codacy/ssm-parameter-manager/sops"
 	"codacy/ssm-parameter-manager/ssm"
 
-	assm "github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go/aws/session"
+	awsSsm "github.com/aws/aws-sdk-go/service/ssm"
 
 	"gopkg.in/yaml.v3"
 )
@@ -25,8 +26,7 @@ func main() {
 		log.Fatal("No AWS environment was specified")
 	}
 
-	session := ssm.NewAWSSession(*environment)
-	svc := assm.New(session)
+	svc := awsSsm.New(newAWSSession(*environment))
 
 	for _, s := range strings.Split(*plainFiles, ",") {
 		if s != "" {
@@ -64,4 +64,13 @@ func parseConfigurationFile(filePath string, encrypted bool) map[string]map[stri
 	}
 
 	return data
+}
+
+func newAWSSession(profile string) *session.Session {
+	session := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Profile:           profile,
+	}))
+
+	return session
 }
