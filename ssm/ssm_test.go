@@ -16,10 +16,6 @@ var parameters = map[string]string{
 	"hello": "world",
 }
 
-var data = map[string]map[string]string{
-	"test": parameters,
-}
-
 func (m *mockSSMClient) PutParameter(input *ssm.PutParameterInput) (*ssm.PutParameterOutput, error) {
 	tier := "Standard"
 	version := int64(1)
@@ -40,5 +36,5 @@ func TestProcessParametersWithoutErrors(t *testing.T) {
 
 	mockSvc := &mockSSMClient{}
 
-	ProcessParameters(mockSvc, data, "test", true)
+	ProcessParameters(mockSvc, parameters, "test", true)
 }

@@ -48,7 +48,7 @@ func main() {
 	}
 }
 
-func parseConfigurationFile(filePath string, encrypted bool) map[string]map[string]string {
+func parseConfigurationFile(filePath string, encrypted bool) map[string]string {
 	var yfile []byte
 	var err error
 
@@ -62,7 +62,7 @@ func parseConfigurationFile(filePath string, encrypted bool) map[string]map[stri
 		log.Fatal(err)
 	}
 
-	data := make(map[string]map[string]string)
+	data := make(map[string]string)
 
 	if err := yaml.Unmarshal(yfile, &data); err != nil {
 		log.Fatal(err)

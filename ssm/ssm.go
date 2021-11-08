@@ -8,11 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
-func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]map[string]string, environment string, verbose bool) {
+func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, environment string, verbose bool) {
 
-	fmt.Printf("Processing %d parameters for %s environment\n", len(parameters[environment]), environment)
+	fmt.Printf("Processing %d parameters for %s environment\n", len(parameters), environment)
 
-	for k, v := range parameters[environment] {
+	for k, v := range parameters {
 		if verbose {
 			fmt.Printf("Putting and tagging parameter with key \"%s\" and value \"%s\"\n", k, v)
 		}
