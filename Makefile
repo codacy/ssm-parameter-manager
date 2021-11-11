@@ -1,9 +1,9 @@
 VERSION := $(shell cat .version)
-LDFLAGS := "-X main.version=${VERSION}"
+LDFLAGS := -linkmode external -w -extldflags "-static" -X main.version=${VERSION}
 
 .PHONY: build
 build:
-	go build -o bin/ssm-parameter-manager  -ldflags $(LDFLAGS)
+	go build -o bin/ssm-parameter-manager  -ldflags '$(LDFLAGS)'
 
 .PHONY: test
 test:
