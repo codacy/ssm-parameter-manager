@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
+	"os/exec"
 
 	"codacy/ssm-parameter-manager/sops"
 	"codacy/ssm-parameter-manager/ssm"
@@ -19,8 +19,9 @@ import (
 
 func main() {
 	verbose := flag.Bool("v", false, "Prints information about the parameters being processed. This will print secrets to stdout in plain text!")
-	plainFiles := flag.String("plainFiles", "", "Path to plain yaml files, separated by comma")
-	encryptedFiles := flag.String("encryptedFiles", "", "Path to encrypted yaml files, separated by comma")
+	plainFile := flag.String("plainFile", "", "Path to plain yaml files, separated by comma")
+	encryptedFile := flag.String("encryptedFile", "", "Path to encrypted yaml files, separated by comma")
+	parameterPrefix := flag.String("parameterPrefix", "", "Prefix for the parameters to be checked and deleted if they are not contained in the config files. If empty, will not delete any parameters.")
 	flag.Parse()
 
 	environment := os.Getenv("AWS_PROFILE")
@@ -31,26 +32,34 @@ func main() {
 
 	svc := awsSsm.New(newAWSSession(environment))
 
-	fmt.Println()
+	plainData := parseConfigurationFile(*plainFile, false)
+	encryptedData := parseConfigurationFile(*encryptedFile, true)
 
-	for _, s := range strings.Split(*plainFiles, ",") {
-		if s != "" {
-			plainData := parseConfigurationFile(s, false)
-			ssm.ProcessParameters(svc, plainData, environment, *verbose)
-		}
+	fmt.Printf("SSM Parameter Manager working environment: \"%s\"\n", environment)
+
+	if *parameterPrefix == "" {
+		fmt.Printf("Parameter prefix is not set, proceeding without deleting parameters.\n")
+	} else {
+		fmt.Printf("Checking parameters with prefix \"%s\"\n", *parameterPrefix)
+		ssm.CleanParameters(svc, *parameterPrefix, true, plainData, encryptedData)
 	}
 
-	for _, s := range strings.Split(*encryptedFiles, ",") {
-		if s != "" {
-			encryptedData := parseConfigurationFile(s, true)
-			ssm.ProcessParameters(svc, encryptedData, environment, *verbose)
-		}
-	}
+	fmt.Printf("Processing %d plain text parameters\n", len(plainData))
+	ssm.ProcessParameters(svc, plainData, *verbose)
+
+	fmt.Printf("Processing %d encrypted parameters\n", len(encryptedData))
+	ssm.ProcessParameters(svc, encryptedData, *verbose)
 }
 
 func parseConfigurationFile(filePath string, encrypted bool) map[string]string {
 	var yfile []byte
 	var err error
+
+	data := make(map[string]string)
+
+	if filePath == "" {
+		return data
+	}
 
 	if encrypted {
 		yfile, err = sops.Decrypt(filePath)
@@ -59,10 +68,12 @@ func parseConfigurationFile(filePath string, encrypted bool) map[string]string {
 	}
 
 	if err != nil {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			log.Fatal(string(exiterr.Stderr))
+		}
+
 		log.Fatal(err)
 	}
-
-	data := make(map[string]string)
 
 	if err := yaml.Unmarshal(yfile, &data); err != nil {
 		log.Fatal(err)

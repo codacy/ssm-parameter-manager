@@ -8,13 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
-func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, environment string, verbose bool) {
-
-	fmt.Printf("Processing %d parameters for %s environment\n", len(parameters), environment)
-
+func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbose bool) {
 	for k, v := range parameters {
 		if verbose {
-			fmt.Printf("Putting and tagging parameter with key \"%s\" and value \"%s\"\n", k, v)
+			fmt.Printf("**PUTTED** \"%s\" - \"%s\"\n", k, v)
 		}
 
 		_, err := putParameter(svc, k, v, "String", true)
@@ -28,6 +25,63 @@ func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, enviro
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+}
+
+func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParameters map[string]string, encryptedParameters map[string]string) {
+	var allParams = make(map[string]string)
+	var result *ssm.GetParametersByPathOutput
+	var nextToken *string
+	var err error
+
+	for result == nil || result.NextToken != nil {
+		result, err = getParametersByPrefix(svc, nextToken, 10, path, true, false)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, v := range result.Parameters {
+			allParams[*v.Name] = *v.Value
+		}
+
+		nextToken = result.NextToken
+	}
+
+	// Remove parameters contained in the config files to avoid deleting them
+	for k := range plainParameters {
+		delete(allParams, k)
+	}
+
+	for k := range encryptedParameters {
+		delete(allParams, k)
+	}
+
+	if len(allParams) == 0 {
+		fmt.Printf("No parameters to delete.\n")
+		return
+	}
+
+	fmt.Printf("Found %d parameters not contained in the ssm configuration files. Deleting...\n", len(allParams))
+	var paramsToDelete []*string
+
+	for k, v := range allParams {
+		if verbose {
+			fmt.Printf("**DELETED**  \"%s\" - \"%s\" \n", k, v)
+		}
+
+		var s = k
+		paramsToDelete = append(paramsToDelete, &s)
+	}
+
+	results, err := deleteParameters(svc, paramsToDelete)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(paramsToDelete) != len(results.DeletedParameters) {
+		log.Fatalf("Expected to delete %d parameters but deleted %d instead \n.", len(paramsToDelete), len(results.DeletedParameters))
 	}
 }
 
@@ -63,6 +117,27 @@ func tagParameter(svc ssmiface.SSMAPI, resourceId string, resourceType string, t
 		ResourceId:   &resourceId,
 		ResourceType: &resourceType,
 		Tags:         tags,
+	})
+
+	return results, err
+}
+
+func getParametersByPrefix(svc ssmiface.SSMAPI, nextToken *string, maxResults int64, path string, recursive bool, decrypt bool) (*ssm.GetParametersByPathOutput, error) {
+	results, err := svc.GetParametersByPath(&ssm.GetParametersByPathInput{
+		MaxResults:       &maxResults,
+		NextToken:        nextToken,
+		ParameterFilters: nil,
+		Path:             &path,
+		Recursive:        &recursive,
+		WithDecryption:   &decrypt,
+	})
+
+	return results, err
+}
+
+func deleteParameters(svc ssmiface.SSMAPI, names []*string) (*ssm.DeleteParametersOutput, error) {
+	results, err := svc.DeleteParameters(&ssm.DeleteParametersInput{
+		Names: names,
 	})
 
 	return results, err

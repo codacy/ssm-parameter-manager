@@ -1,6 +1,8 @@
 # SSM Parameter Manager
 
-A generic tool to achieve SSM parameter configuration "as code" and avoid manual input. The goal is to have a way to process **yaml** files containing project specific configuration, which will automatically be created in the respective AWS account/environment.
+A generic tool to achieve SSM parameter configuration "as code" and avoid manual input. The goal is to have a way to process **yaml** files containing project specific configuration, which will automatically be created in the respective AWS account/environment. 
+
+Additionally, this tool can also be used to delete parameters which are not contained within the configuration files.
 
 Each project using this tool needs to wire it in the respective circleci configuration and also needs to have the parameter files commited in its own repo.
 
@@ -34,6 +36,8 @@ Each file will then be parsed, and individual entries will be created in the SSM
 
 Currently, this tool only works with the **AWS_PROFILE** variable, which will be used to point to the right AWS account.
 
+If `-parameterPrefix` flag is specified, existing parameters with that prefix will be deleted from AWS.
+
 Parameters created with this tool will be tagged with
 
 ```
@@ -48,10 +52,15 @@ ssm-parameter-manager [flags]
 
 ## Flags
 ```
-  -plainFiles              Path to plain yaml files, separated by comma
-  -encryptedFiles          Path to encrypted yaml files, separated by comma
-  -v                       Prints parameters being processed, including secrets in plain text
+  -plainFile              Path to the plain yaml file
+  -encryptedFile          Path to encrypted yaml file
+  -parameterPrefix        Prefix for the parameters to be checked and deleted if they are not contained in the config files. If empty, will not delete any parameters.
+  -v                      Prints parameters being processed, including secrets in plain text
 ```
+
+### Warning!
+
+As of release 0.0.7, this tool has the capability to delete parameters of a given prefix if they are not defined in the configuration files, enabled by passing a flag when running and **disabled** by default. This means that if you delete a parameter from the configuration files it will be deleted from the AWS environment. This is the desired behaviour to encourage configuration as code, but this can be dangerous if some critical parameters are defined in some other way other than the config files, so caution is advised.
 
 ## Working with files with sensitive parameters
 
