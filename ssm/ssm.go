@@ -3,6 +3,7 @@ package ssm
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
@@ -66,8 +67,12 @@ func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParame
 	var paramsToDelete []*string
 
 	for k, v := range allParams {
+		if !strings.HasSuffix(path, "/") || !strings.HasPrefix(k, path) {
+			log.Fatal("Prefix doesn't end with \"/\" or would delete a parameter that doesn't start with the specified prefix.")
+		}
+
 		if verbose {
-			fmt.Printf("**DELETED**  \"%s\" - \"%s\" \n", k, v)
+			fmt.Printf("**DELETING**  \"%s\" - \"%s\" \n", k, v)
 		}
 
 		var s = k

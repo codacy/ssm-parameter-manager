@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"codacy/ssm-parameter-manager/sops"
 	"codacy/ssm-parameter-manager/ssm"
@@ -38,8 +39,12 @@ func main() {
 	fmt.Printf("SSM Parameter Manager working environment: \"%s\"\n", environment)
 
 	if *parameterPrefix == "" {
-		fmt.Printf("Parameter prefix is not set, proceeding without deleting parameters.\n")
+		fmt.Printf("Parameter prefix is not set - proceeding without deleting parameters.\n")
 	} else {
+		if !strings.HasSuffix(*parameterPrefix, "/") {
+			*parameterPrefix += "/"
+		}
+
 		fmt.Printf("Checking parameters with prefix \"%s\"\n", *parameterPrefix)
 		ssm.CleanParameters(svc, *parameterPrefix, true, plainData, encryptedData)
 	}
