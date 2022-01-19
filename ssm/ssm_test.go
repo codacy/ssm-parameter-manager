@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
+	"github.com/stretchr/testify/assert"
 )
 
 type mockSSMClient struct {
@@ -15,6 +16,12 @@ type mockSSMClient struct {
 var parameters = map[string]string{
 	"/codacy/test/foo":   "bar",
 	"/codacy/test/hello": "world",
+}
+
+var parametersFail = map[string]string{
+	"/codacy/test/one":   "1",
+	"/codacy/test/two":   "2",
+	"/codacy/test/three": "3",
 }
 
 func (m *mockSSMClient) PutParameter(input *ssm.PutParameterInput) (*ssm.PutParameterOutput, error) {
@@ -90,5 +97,18 @@ func TestProcessParametersWithoutErrors(t *testing.T) {
 
 func TestDeleteParametersWihoutErrors(t *testing.T) {
 	mockSvc := &mockSSMClient{}
-	CleanParameters(mockSvc, "/codacy/test/", true, parameters, nil)
+	_, err := CleanParameters(mockSvc, "/codacy/test/", true, parameters, nil)
+	assert.Nil(t, err)
+}
+
+func TestDeleteParametersFailWrongPrefix(t *testing.T) {
+	mockSvc := &mockSSMClient{}
+	_, err := CleanParameters(mockSvc, "/codacy/testwrongprefix/", true, parameters, nil)
+	assert.NotNil(t, err)
+}
+
+func TestDeleteParametersFailDifferentCount(t *testing.T) {
+	mockSvc := &mockSSMClient{}
+	_, err := CleanParameters(mockSvc, "/codacy/test/", true, parametersFail, nil)
+	assert.NotNil(t, err)
 }

@@ -46,14 +46,26 @@ func main() {
 		}
 
 		fmt.Printf("Checking parameters with prefix \"%s\"\n", *parameterPrefix)
-		ssm.CleanParameters(svc, *parameterPrefix, true, plainData, encryptedData)
+		_, err := ssm.CleanParameters(svc, *parameterPrefix, true, plainData, encryptedData)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	fmt.Printf("Processing %d plain text parameters\n", len(plainData))
-	ssm.ProcessParameters(svc, plainData, *verbose)
+	_, err := ssm.ProcessParameters(svc, plainData, *verbose)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	fmt.Printf("Processing %d encrypted parameters\n", len(encryptedData))
-	ssm.ProcessParameters(svc, encryptedData, *verbose)
+	_, err = ssm.ProcessParameters(svc, encryptedData, *verbose)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func parseConfigurationFile(filePath string, encrypted bool) map[string]string {
