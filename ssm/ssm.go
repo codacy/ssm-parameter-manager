@@ -9,29 +9,29 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
-func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbose bool) (int, error) {
+func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbose bool) error {
 	for k, v := range parameters {
 		if verbose {
-			fmt.Printf("**PUTTED** \"%s\" - \"%s\"\n", k, v)
+			fmt.Printf("**PUSHED** \"%s\" - \"%s\"\n", k, v)
 		}
 
 		_, err := putParameter(svc, k, v, "String", true)
 
 		if err != nil {
-			return -1, err
+			return err
 		}
 
 		_, err = tagParameter(svc, k, "Parameter", createTags())
 
 		if err != nil {
-			return -1, err
+			return err
 		}
 	}
 
-	return len(parameters), nil
+	return nil
 }
 
-func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParameters map[string]string, encryptedParameters map[string]string) (int, error) {
+func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParameters map[string]string, encryptedParameters map[string]string) error {
 	var allParams = make(map[string]string)
 	var result *ssm.GetParametersByPathOutput
 	var nextToken *string
@@ -41,7 +41,7 @@ func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParame
 		result, err = getParametersByPrefix(svc, nextToken, 10, path, true, false)
 
 		if err != nil {
-			return -1, err
+			return err
 		}
 
 		for _, v := range result.Parameters {
@@ -62,7 +62,7 @@ func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParame
 
 	if len(allParams) == 0 {
 		fmt.Printf("No parameters to delete.\n")
-		return 0, nil
+		return nil
 	}
 
 	fmt.Printf("Found %d parameters not contained in the ssm configuration files. Deleting...\n", len(allParams))
@@ -70,7 +70,7 @@ func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParame
 
 	for k, v := range allParams {
 		if !strings.HasSuffix(path, "/") || !strings.HasPrefix(k, path) {
-			return -1, errors.New("prefix doesn't end with \"/\" or would delete a parameter that doesn't start with the specified prefix")
+			return errors.New("prefix doesn't end with \"/\" or would delete a parameter that doesn't start with the specified prefix")
 		}
 
 		if verbose {
@@ -84,14 +84,14 @@ func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParame
 	results, err := deleteParameters(svc, paramsToDelete)
 
 	if err != nil {
-		return -1, err
+		return err
 	}
 
 	if len(paramsToDelete) != len(results.DeletedParameters) {
-		return -1, fmt.Errorf("expected to delete %d parameters but deleted %d instead", len(paramsToDelete), len(results.DeletedParameters))
+		return fmt.Errorf("expected to delete %d parameters but deleted %d instead", len(paramsToDelete), len(results.DeletedParameters))
 	}
 
-	return len(results.DeletedParameters), nil
+	return nil
 }
 
 func createTags() []*ssm.Tag {

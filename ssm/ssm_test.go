@@ -97,18 +97,18 @@ func TestProcessParametersWithoutErrors(t *testing.T) {
 
 func TestDeleteParametersWihoutErrors(t *testing.T) {
 	mockSvc := &mockSSMClient{}
-	_, err := CleanParameters(mockSvc, "/codacy/test/", true, parameters, nil)
+	err := CleanParameters(mockSvc, "/codacy/test/", true, parameters, nil)
 	assert.Nil(t, err)
 }
 
 func TestDeleteParametersFailWrongPrefix(t *testing.T) {
 	mockSvc := &mockSSMClient{}
-	_, err := CleanParameters(mockSvc, "/codacy/testwrongprefix/", true, parameters, nil)
+	err := CleanParameters(mockSvc, "/codacy/testwrongprefix/", true, parameters, nil)
 	assert.NotNil(t, err)
 }
 
 func TestDeleteParametersFailDifferentCount(t *testing.T) {
 	mockSvc := &mockSSMClient{}
-	_, err := CleanParameters(mockSvc, "/codacy/test/", true, parametersFail, nil)
+	err := CleanParameters(mockSvc, "/codacy/test/", true, parametersFail, nil)
 	assert.NotNil(t, err)
 }
