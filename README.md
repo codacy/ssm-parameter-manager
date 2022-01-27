@@ -12,19 +12,18 @@ It is capable of handling sensitive values, such as passwords, has it makes use 
 
 (**only necessary when working with encrypted values**)
 
-* Configurted AWS CLI
-* Mozilla SOPS 
-* Auxiliary encryption script
+*   Configured AWS CLI
+*   Mozilla SOPS 
+*   Auxiliary encryption script
 
 Installing Mozilla SOPS: 
 ````sh
 brew install sops
 ````
 Auxiliary encryption script:
-````
+````sh
 https://bitbucket.org/qamine/codacy-scripts/src/master/misc/sops-encryption.sh
 ````
-
 
 ## Usage
 
@@ -40,7 +39,7 @@ If `-parameterPrefix` flag is specified, existing parameters with that prefix wi
 
 Parameters created with this tool will be tagged with
 
-```
+```sh
 ssm-managed=true
 ```
 
@@ -51,6 +50,7 @@ ssm-parameter-manager [flags]
 ```
 
 ## Flags
+
 ```
   -plainFile              Path to the plain yaml file
   -encryptedFile          Path to encrypted yaml file
@@ -58,7 +58,7 @@ ssm-parameter-manager [flags]
   -v                      Prints parameters being processed, including secrets in plain text
 ```
 
-### Warning!
+### Warning
 
 As of release 0.0.7, this tool has the capability to delete parameters of a given prefix if they are not defined in the configuration files, enabled by passing a flag when running and **disabled** by default. This means that if you delete a parameter from the configuration files it will be deleted from the AWS environment. This is the desired behaviour to encourage configuration as code, but this can be dangerous if some critical parameters are defined in some other way other than the config files, so caution is advised.
 
@@ -87,7 +87,7 @@ Simply decrypt the file, add the information and encrypt the file again, using t
 
 ## Examples
 
-#### Plain text configuration file example
+### Plain text configuration file example
 
 See parameter key convention names defined on [the handbook](http://127.0.0.1:8000/engineering/guidelines/application-parameters.html#ssm-parameter-conventions).
 
@@ -97,7 +97,7 @@ ssm/parameter/path/b: 'b'
 ssm/parameter/path/c:  3
 ```
 
-#### Encrypted configuration file example
+### Encrypted configuration file example
 
 ```yaml
 ssm/parameter/path/super-secret-key: ENC[AES256_GCM,data:vQK6Gg+OzUK7QQ==,iv:w6bdRet/EVwvXwDwrDaxisO/IY1sP3fN/GkvPN+euzA=,tag:2qDAm80zvxDh8UbVlQWiXA==,type:str]

@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
+// ProcessParameters takes a map of parameters and pushes them to the parameter store of the configured AWS environemnt
 func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbose bool) error {
 	for k, v := range parameters {
 		if verbose {
@@ -31,6 +32,7 @@ func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbos
 	return nil
 }
 
+// CleanParameters deletes SSM parameters for a given path, if they're not present in the specified maps
 func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParameters map[string]string, encryptedParameters map[string]string) error {
 	var allParams = make(map[string]string)
 	var result *ssm.GetParametersByPathOutput
@@ -121,9 +123,9 @@ func putParameter(svc ssmiface.SSMAPI, name string, value string, paramType stri
 	return results, err
 }
 
-func tagParameter(svc ssmiface.SSMAPI, resourceId string, resourceType string, tags []*ssm.Tag) (*ssm.AddTagsToResourceOutput, error) {
+func tagParameter(svc ssmiface.SSMAPI, resourceID string, resourceType string, tags []*ssm.Tag) (*ssm.AddTagsToResourceOutput, error) {
 	results, err := svc.AddTagsToResource(&ssm.AddTagsToResourceInput{
-		ResourceId:   &resourceId,
+		ResourceId:   &resourceID,
 		ResourceType: &resourceType,
 		Tags:         tags,
 	})
