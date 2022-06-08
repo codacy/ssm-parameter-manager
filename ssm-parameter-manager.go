@@ -68,11 +68,11 @@ func main() {
 	}
 }
 
-func parseConfigurationFile(filePath string, encrypted bool) map[string]string {
+func parseConfigurationFile(filePath string, encrypted bool) map[string]interface{} {
 	var yfile []byte
 	var err error
 
-	data := make(map[string]string)
+	data := make(map[string]interface{})
 
 	if filePath == "" {
 		return data

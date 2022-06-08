@@ -13,15 +13,48 @@ type mockSSMClient struct {
 	ssmiface.SSMAPI
 }
 
-var parameters = map[string]string{
+var parameters = map[string]interface{}{
 	"/codacy/test/foo":   "bar",
 	"/codacy/test/hello": "world",
+	"/codacy/test/correct/a": map[string]interface{}{
+		"type":  "StringList",
+		"value": "some,values",
+	},
+	"/codacy/test/correct/b": map[string]interface{}{
+		"type":  "String",
+		"value": "a value",
+	},
+	"/codacy/test/correct/c": map[string]interface{}{
+		"type":  "SecureString",
+		"value": "a value",
+	},
 }
 
-var parametersFail = map[string]string{
+var parametersFail = map[string]interface{}{
 	"/codacy/test/one":   "1",
 	"/codacy/test/two":   "2",
 	"/codacy/test/three": "3",
+}
+
+var parametersWithTypeInvalidType = map[string]interface{}{
+	"/codacy/test/correct/a": map[string]interface{}{
+		"type":  "",
+		"value": "some,values",
+	},
+}
+
+var parametersWithTypeInvalidEmptyValue = map[string]interface{}{
+	"/codacy/test/correct/a": map[string]interface{}{
+		"type":  "StringList",
+		"value": "",
+	},
+}
+
+var parametersWithTypeInvalidStringList = map[string]interface{}{
+	"/codacy/test/correct/a": map[string]interface{}{
+		"type":  "StringList",
+		"value": "no comma here",
+	},
 }
 
 func (m *mockSSMClient) PutParameter(input *ssm.PutParameterInput) (*ssm.PutParameterOutput, error) {
@@ -93,6 +126,24 @@ func TestProcessParametersWithoutErrors(t *testing.T) {
 	mockSvc := &mockSSMClient{}
 
 	ProcessParameters(mockSvc, parameters, true)
+}
+
+func TestProcessParametersTypeFailInvalidType(t *testing.T) {
+	mockSvc := &mockSSMClient{}
+	err := ProcessParameters(mockSvc, parametersWithTypeInvalidType, true)
+	assert.NotNil(t, err)
+}
+
+func TestProcessParametersTypeFailEmptyValue(t *testing.T) {
+	mockSvc := &mockSSMClient{}
+	err := ProcessParameters(mockSvc, parametersWithTypeInvalidEmptyValue, true)
+	assert.NotNil(t, err)
+}
+
+func TestProcessParametersTypeFailInvalidStringList(t *testing.T) {
+	mockSvc := &mockSSMClient{}
+	err := ProcessParameters(mockSvc, parametersWithTypeInvalidStringList, true)
+	assert.NotNil(t, err)
 }
 
 func TestDeleteParametersWihoutErrors(t *testing.T) {
