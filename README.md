@@ -1,6 +1,8 @@
 # SSM Parameter Manager
 
-A generic tool to achieve SSM parameter configuration "as code" and avoid manual input. The goal is to have a way to process **yaml** files containing project specific configuration, which will automatically be created in the respective AWS account/environment.
+A generic tool to achieve SSM parameter configuration "as code" and avoid manual input. The goal is to have a way to process **yaml** files containing project specific configuration, which will automatically be created in the respective AWS account/environment. 
+
+Additionally, this tool can also be used to delete parameters which are not contained within the configuration files.
 
 Each project using this tool needs to wire it in the respective circleci configuration and also needs to have the parameter files commited in its own repo.
 
@@ -10,19 +12,18 @@ It is capable of handling sensitive values, such as passwords, has it makes use 
 
 (**only necessary when working with encrypted values**)
 
-* Configurted AWS CLI
-* Mozilla SOPS 
-* Auxiliary encryption script
+*   Configured AWS CLI
+*   Mozilla SOPS 
+*   Auxiliary encryption script
 
 Installing Mozilla SOPS: 
 ````sh
 brew install sops
 ````
 Auxiliary encryption script:
-````
+````sh
 https://bitbucket.org/qamine/codacy-scripts/src/master/misc/sops-encryption.sh
 ````
-
 
 ## Usage
 
@@ -34,9 +35,11 @@ Each file will then be parsed, and individual entries will be created in the SSM
 
 Currently, this tool only works with the **AWS_PROFILE** variable, which will be used to point to the right AWS account.
 
+If `-parameterPrefix` flag is specified, existing parameters with that prefix will be deleted from AWS.
+
 Parameters created with this tool will be tagged with
 
-```
+```sh
 ssm-managed=true
 ```
 
@@ -47,11 +50,17 @@ ssm-parameter-manager [flags]
 ```
 
 ## Flags
+
 ```
-  -plainFiles              Path to plain yaml files, separated by comma
-  -encryptedFiles          Path to encrypted yaml files, separated by comma
-  -v                       Prints parameters being processed, including secrets in plain text
+  -plainFile              Path to the plain yaml file
+  -encryptedFile          Path to encrypted yaml file
+  -parameterPrefix        Prefix for the parameters to be checked and deleted if they are not contained in the config files. If empty, will not delete any parameters.
+  -v                      Prints parameters being processed, including secrets in plain text
 ```
+
+### Warning
+
+As of release 0.0.7, this tool has the capability to delete parameters of a given prefix if they are not defined in the configuration files, enabled by passing a flag when running and **disabled** by default. This means that if you delete a parameter from the configuration files it will be deleted from the AWS environment. This is the desired behaviour to encourage configuration as code, but this can be dangerous if some critical parameters are defined in some other way other than the config files, so caution is advised.
 
 ## Working with files with sensitive parameters
 
@@ -78,7 +87,7 @@ Simply decrypt the file, add the information and encrypt the file again, using t
 
 ## Examples
 
-#### Plain text configuration file example
+### Plain text configuration file example
 
 See parameter key convention names defined on [the handbook](http://127.0.0.1:8000/engineering/guidelines/application-parameters.html#ssm-parameter-conventions).
 
@@ -88,7 +97,7 @@ ssm/parameter/path/b: 'b'
 ssm/parameter/path/c:  3
 ```
 
-#### Encrypted configuration file example
+### Encrypted configuration file example
 
 ```yaml
 ssm/parameter/path/super-secret-key: ENC[AES256_GCM,data:vQK6Gg+OzUK7QQ==,iv:w6bdRet/EVwvXwDwrDaxisO/IY1sP3fN/GkvPN+euzA=,tag:2qDAm80zvxDh8UbVlQWiXA==,type:str]
