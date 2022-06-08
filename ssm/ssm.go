@@ -9,14 +9,59 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 )
 
-// ProcessParameters takes a map of parameters and pushes them to the parameter store of the configured AWS environemnt
-func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbose bool) error {
-	for k, v := range parameters {
-		if verbose {
-			fmt.Printf("**PUSHED** \"%s\" - \"%s\"\n", k, v)
+func validParameterType(parameterType string) bool {
+	for _, t := range ssm.ParameterType_Values() {
+		if parameterType == t {
+			return true
+		}
+	}
+
+	return false
+}
+
+func parseParameter(key string, parameter interface{}) (string, string, error) {
+	var parameterType, parameterValue string
+	switch p := parameter.(type) {
+	case string:
+		parameterType = "String"
+		parameterValue = p
+	case map[string]interface{}:
+		var ok bool
+		if parameterType, ok = p["type"].(string); !ok {
+			return "", "", fmt.Errorf("key [%s] doesnt have a defined type", key)
+		}
+		if !validParameterType(parameterType) {
+			return "", "", fmt.Errorf("invalid parameter type [%s] for key [%s]", parameterType, key)
 		}
 
-		_, err := putParameter(svc, k, v, "String", true)
+		if parameterValue == "" || (parameterType == ssm.ParameterTypeStringList && !strings.Contains(parameterValue, ",")) {
+			return "", "", fmt.Errorf("invalid value [%s] for key [%s]", parameterValue, key)
+		}
+
+		if parameterValue, ok = p["value"].(string); !ok {
+			return "", "", fmt.Errorf("key [%s] doesnt have a defined value", key)
+		}
+	default:
+		return "", "", errors.New("unknown parameter definition")
+	}
+
+	return parameterType, parameterValue, nil
+}
+
+// ProcessParameters takes a map of parameters and pushes them to the parameter store of the configured AWS environemnt
+func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]interface{}, verbose bool) error {
+	for k, v := range parameters {
+		var parameterType, parameterValue, err = parseParameter(k, v)
+
+		if err != nil {
+			return err
+		}
+
+		if verbose {
+			fmt.Printf("**PUSHED** \"%s\" - \"%s\"\n", k, parameterValue)
+		}
+
+		_, err = putParameter(svc, k, parameterValue, parameterType, true)
 
 		if err != nil {
 			return err
@@ -33,7 +78,7 @@ func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]string, verbos
 }
 
 // CleanParameters deletes SSM parameters for a given path, if they're not present in the specified maps
-func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParameters map[string]string, encryptedParameters map[string]string) error {
+func CleanParameters(svc ssmiface.SSMAPI, path string, verbose bool, plainParameters map[string]interface{}, encryptedParameters map[string]interface{}) error {
 	var allParams = make(map[string]string)
 	var result *ssm.GetParametersByPathOutput
 	var nextToken *string
