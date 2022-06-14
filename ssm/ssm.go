@@ -34,13 +34,14 @@ func parseParameter(key string, parameter interface{}) (string, string, error) {
 			return "", "", fmt.Errorf("invalid parameter type [%s] for key [%s]", parameterType, key)
 		}
 
+		if parameterValue, ok = p["value"].(string); !ok {
+			return "", "", fmt.Errorf("key [%s] doesnt have a defined value", key)
+		}
+
 		if parameterValue == "" || (parameterType == ssm.ParameterTypeStringList && !strings.Contains(parameterValue, ",")) {
 			return "", "", fmt.Errorf("invalid value [%s] for key [%s]", parameterValue, key)
 		}
 
-		if parameterValue, ok = p["value"].(string); !ok {
-			return "", "", fmt.Errorf("key [%s] doesnt have a defined value", key)
-		}
 	default:
 		return "", "", errors.New("unknown parameter definition")
 	}

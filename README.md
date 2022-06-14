@@ -89,12 +89,15 @@ Simply decrypt the file, add the information and encrypt the file again, using t
 
 ### Plain text configuration file example
 
-See parameter key convention names defined on [the handbook](http://127.0.0.1:8000/engineering/guidelines/application-parameters.html#ssm-parameter-conventions).
+See parameter key convention names defined on [the handbook](https://handbook.dev.codacy.org/engineering/guidelines/application-parameters.html#ssm-parameter-conventions).
 
 ```yaml
 ssm/parameter/path/a: 'a'
 ssm/parameter/path/b: 'b'
 ssm/parameter/path/c:  3
+ssm/parameter/path/d:
+  type: StringList
+  value: "a,string,list"
 ```
 
 ### Encrypted configuration file example

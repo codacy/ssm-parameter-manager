@@ -124,8 +124,8 @@ func (m *mockSSMClient) DeleteParameters(input *ssm.DeleteParametersInput) (*ssm
 func TestProcessParametersWithoutErrors(t *testing.T) {
 
 	mockSvc := &mockSSMClient{}
-
-	ProcessParameters(mockSvc, parameters, true)
+	err := ProcessParameters(mockSvc, parameters, true)
+	assert.Nil(t, err)
 }
 
 func TestProcessParametersTypeFailInvalidType(t *testing.T) {
