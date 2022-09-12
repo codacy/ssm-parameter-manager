@@ -39,11 +39,11 @@ func parseParameter(key string, parameter interface{}) (*string, *string, error)
 		}
 
 		if parameterValue == "" || (parameterType == ssm.ParameterTypeStringList && !strings.Contains(parameterValue, ",")) {
-			return nil, nil, fmt.Errorf("invalid value [%s] for key [%s], it needs to be a valid list", parameterValue, key)
+			return nil, nil, fmt.Errorf("invalid value for key [%s], it needs to be a valid list", key)
 		}
 
 	default:
-		return nil, nil, errors.New("unknown parameter definition")
+		return nil, nil, fmt.Errorf("unknown parameter definition for key [%s]", key)
 	}
 
 	return &parameterType, &parameterValue, nil
@@ -52,14 +52,14 @@ func parseParameter(key string, parameter interface{}) (*string, *string, error)
 // ProcessParameters takes a map of parameters and pushes them to the parameter store of the configured AWS environemnt
 func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]interface{}, verbose bool) error {
 	for k, v := range parameters {
+		if verbose {
+			fmt.Printf("**Processing ** \"%s\" - \"%s\"\n", k, v)
+		}
+
 		var parameterType, parameterValue, err = parseParameter(k, v)
 
 		if err != nil {
 			return err
-		}
-
-		if verbose {
-			fmt.Printf("**PUSHED** \"%s\" - \"%s\"\n", k, *parameterValue)
 		}
 
 		_, err = putParameter(svc, k, *parameterValue, *parameterType, true)
