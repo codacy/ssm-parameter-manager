@@ -64,7 +64,7 @@ As of release 0.0.7, this tool has the capability to delete parameters of a give
 
 ## Working with files with sensitive parameters
 
-In order to safely commit configuration files that contain sensitive data, it is necessary to first encrypt them. There is an auxiliary script to ease this process.
+In order to safely commit configuration files that contain sensitive data, it is necessary to first encrypt them. There is an [auxiliary script](https://bitbucket.org/qamine/codacy-scripts/src/master/misc/sops-encryption.sh) to ease this process.
 
 ### Encrypting files
 
@@ -91,11 +91,14 @@ Simply decrypt the file, add the information and encrypt the file again, using t
 
 See parameter key convention names defined on [the handbook](https://handbook.dev.codacy.org/engineering/guidelines/application-parameters.html#ssm-parameter-conventions).
 
+>All values must be quoted, either with `'` or `"`.
+
 ```yaml
 ssm/parameter/path/a: 'a'
 ssm/parameter/path/b: 'b'
-ssm/parameter/path/c:  3
-ssm/parameter/path/d:
+ssm/parameter/path/c: '3'
+ssm/parameter/path/d: 'true'
+ssm/parameter/path/e:
   type: StringList
   value: "a,string,list"
 ```
