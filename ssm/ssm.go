@@ -19,7 +19,7 @@ func validParameterType(parameterType string) bool {
 	return false
 }
 
-func parseParameter(key string, parameter interface{}) (string, string, error) {
+func parseParameter(key string, parameter interface{}) (*string, *string, error) {
 	var parameterType, parameterValue string
 	switch p := parameter.(type) {
 	case string:
@@ -28,25 +28,25 @@ func parseParameter(key string, parameter interface{}) (string, string, error) {
 	case map[string]interface{}:
 		var ok bool
 		if parameterType, ok = p["type"].(string); !ok {
-			return "", "", fmt.Errorf("key [%s] doesnt have a defined type", key)
+			return nil, nil, fmt.Errorf("key [%s] doesnt have a defined type", key)
 		}
 		if !validParameterType(parameterType) {
-			return "", "", fmt.Errorf("invalid parameter type [%s] for key [%s]", parameterType, key)
+			return nil, nil, fmt.Errorf("invalid parameter type [%s] for key [%s]", parameterType, key)
 		}
 
 		if parameterValue, ok = p["value"].(string); !ok {
-			return "", "", fmt.Errorf("key [%s] doesnt have a defined value", key)
+			return nil, nil, fmt.Errorf("key [%s] doesnt have a defined value", key)
 		}
 
 		if parameterValue == "" || (parameterType == ssm.ParameterTypeStringList && !strings.Contains(parameterValue, ",")) {
-			return "", "", fmt.Errorf("invalid value [%s] for key [%s]", parameterValue, key)
+			return nil, nil, fmt.Errorf("invalid value [%s] for key [%s], it needs to be a valid list", parameterValue, key)
 		}
 
 	default:
-		return "", "", errors.New("unknown parameter definition")
+		return nil, nil, errors.New("unknown parameter definition")
 	}
 
-	return parameterType, parameterValue, nil
+	return &parameterType, &parameterValue, nil
 }
 
 // ProcessParameters takes a map of parameters and pushes them to the parameter store of the configured AWS environemnt
@@ -59,10 +59,10 @@ func ProcessParameters(svc ssmiface.SSMAPI, parameters map[string]interface{}, v
 		}
 
 		if verbose {
-			fmt.Printf("**PUSHED** \"%s\" - \"%s\"\n", k, parameterValue)
+			fmt.Printf("**PUSHED** \"%s\" - \"%s\"\n", k, *parameterValue)
 		}
 
-		_, err = putParameter(svc, k, parameterValue, parameterType, true)
+		_, err = putParameter(svc, k, *parameterValue, *parameterType, true)
 
 		if err != nil {
 			return err
