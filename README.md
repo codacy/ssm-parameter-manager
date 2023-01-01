@@ -130,3 +130,4 @@ sops:
 ```sh
 ssm-parameter-manager -plainFiles "/path/to/plain/file.yaml" -encryptedFiles "/path/to/encryptedfie.yaml"
 ```
+test
